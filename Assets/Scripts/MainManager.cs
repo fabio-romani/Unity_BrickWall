@@ -8,8 +8,11 @@ using System.IO;
 public class MainManager : MonoBehaviour
 {
     public Brick BrickPrefab;
+    public Paddle PaddlePrefab;
+    public Ball BallPrefab;
     public int LineCount = 6;
-    public Rigidbody Ball;
+    public Rigidbody BallRb;
+    Ball ball;
 
     public Text ScoreText, bestScoreText;
     public GameObject GameOverText;
@@ -30,6 +33,8 @@ public class MainManager : MonoBehaviour
     void Start()
     {
         Debug.Log("Inside Start");
+        m_Started = false;
+        m_GameOver = false;
         BuildBrickWall();
     }
 
@@ -51,37 +56,43 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+        Instantiate(PaddlePrefab, PaddlePrefab.transform.position, PaddlePrefab.transform.rotation);
+        ball = Instantiate(BallPrefab, BallPrefab.transform.position, BallPrefab.transform.rotation);
+        BallRb = ball.GetComponent<Rigidbody>();
+        Debug.Log("BallRb: " + BallRb);
     }
 
     void RunGame()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            m_Started = true;
-            float randomDirection = Random.Range(-1.0f, 1.0f);
-            Vector3 forceDir = new Vector3(randomDirection, 1, 0);
-            forceDir.Normalize();
+        m_Started = true;
+        float randomDirection = Random.Range(-1.0f, 1.0f);
+        Vector3 forceDir = new Vector3(randomDirection, 1, 0);
+        forceDir.Normalize();
 
-            Ball.transform.SetParent(null);
-            Ball.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
-        }
+        BallRb.transform.SetParent(null);
+        BallRb.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
     }
 
     private void Update()
     {
         if (!m_Started)
         {
-            RunGame();
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                Debug.Log("Running Game");
+                RunGame();
+            }
         }
         else if (m_GameOver)
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
+                Debug.Log("Resetting Game");
                 m_GameOver = false;
-                m_Started = false;
+                //m_Started = false;
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-                Debug.Log("Scene Reloaded");
-                //BuildBrickWall();
+                //Debug.Log("Scene Reloaded");
+                BuildBrickWall();
                 //RunGame();
             }
         }
@@ -95,6 +106,7 @@ public class MainManager : MonoBehaviour
 
     public void GameOver()
     {
+        Debug.Log("Inside GameOver");
         m_GameOver = true;
         GameOverText.SetActive(true);
         SaveStats();
@@ -102,14 +114,14 @@ public class MainManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null)
-        {
-            Destroy(gameObject);
-            return;
-        }
+        //if (Instance != null)
+        //{
+        //    Destroy(gameObject);
+        //    return;
+        //}
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        //DontDestroyOnLoad(gameObject);
         LoadStats();
     }
 
